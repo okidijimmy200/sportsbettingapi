@@ -4,7 +4,8 @@ import generated.sportbet_pb2 as sportbet_pb2
 import generated.sportbet_pb2_grpc as sportbet_pb2_grpc
 from service.interfaces import SportsBettingInterface
 from models.models import (
-    CreateBetRequest
+    CreateBetRequest,
+    ReadBetRequest,
 )
 
 class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServicer):
@@ -23,6 +24,14 @@ class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServi
             request.game_date
         ))
         return sportbet_pb2.CreateBetResponse(code=response.code, reason= response.reason)
+
+    def ReadBet(self, request, context):
+        response = self.sports_service.read(ReadBetRequest(
+            request.league,
+            request.start_date,
+            request.end_date
+        ))
+        return sportbet_pb2.ReadBetResponse(code=response.code, response=response.response, reason=response.reason)
 
 def run (
     sports_service: SportsBettingInterface

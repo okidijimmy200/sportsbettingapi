@@ -49,11 +49,13 @@ class CreateBetResponse:
 
 class ReadBetRequest:
     league: str
-    date_range: str
+    start_date: str
+    end_date: str
 
-    def __init__(self, league: str, date_range: str) -> None:
+    def __init__(self, league: str, start_date: str, end_date: str) -> None:
         self.league = league
-        self.date_range= date_range
+        self.start_date= start_date
+        self.end_date = end_date
 
 class ReadBetResponse:
     code: int

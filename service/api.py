@@ -1,7 +1,7 @@
 from service.interfaces import SportsBettingInterface, StorageInterface
-from models.models import CreateBetRequest, CreateBetResponse, SportBet
+from models.models import CreateBetRequest, CreateBetResponse, SportBet, ReadBetRequest, ReadBetResponse
 
-class SportsBettingService:
+class SportsBettingService(SportsBettingInterface):
     def __init__(self, storage: StorageInterface) -> None:
         self.storage = storage
 
@@ -18,7 +18,6 @@ class SportsBettingService:
                 game_date=data.game_date
             )
                 )
-            print(code)
             if code != 200 and code != 201:
                 return CreateBetResponse(400, response)
 
@@ -30,4 +29,24 @@ class SportsBettingService:
                 + f"{type(e).__name__} {str(e)}"
             )
             return CreateBetResponse(500, result)
+
+    def read(self, data: ReadBetRequest) -> ReadBetResponse:
+        try:
+            code, response, reason = self.storage.read_bet(ReadBetRequest(
+                league=data.league,
+                start_date=data.start_date,
+                end_date = data.end_date
+            ))
+            if code != 200:
+                return ReadBetResponse(400, None, reason)
+            
+            return ReadBetResponse(code, response, reason)
+        except Exception as e:
+            result = (
+                f"-Failed to read data from MYSQL DB, reason: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            return ReadBetResponse(500, '', result)
+
+    
         

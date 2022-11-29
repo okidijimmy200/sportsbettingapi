@@ -1,8 +1,8 @@
 from typing import Tuple
 from sqlalchemy.orm import sessionmaker
 from service.interfaces import StorageInterface
-from storage.mysql.models import BettingModel
-from models.models import SportBet
+from storage.mysql.models import BettingModel, BettingSchema
+from models.models import SportBet, ReadBetRequest, ReadBetResponse
 
 class MySQLStorage(StorageInterface):
     db: sessionmaker
@@ -22,9 +22,24 @@ class MySQLStorage(StorageInterface):
             )
             self.db.add(new_data)
             self.db.commit()
-            print("data stored in db")
             result = 'Data stored successfully in MYSQL db'
             return 201, result
+        except Exception as e:
+            reason = (
+                f"failed to read data from storage: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            print(reason) # TODO: make log
+            return 500, reason, None
+
+    def read_bet(self, data: ReadBetRequest) -> ReadBetResponse:
+        try:
+            schema = BettingSchema()
+            q = self.db.query(BettingModel).filter(BettingModel.league == data.league, BettingModel.game_date.between(data.start_date, data.end_date)).first()
+            reason = schema.dump([q], many=True)
+            if reason is None:
+                return 403, None, 'Data not found'
+            return 200, reason, 'Data read from mysql db'
         except Exception as e:
             reason = (
                 f"failed to read data from storage: "
