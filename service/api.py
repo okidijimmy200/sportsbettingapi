@@ -1,5 +1,15 @@
 from service.interfaces import SportsBettingInterface, StorageInterface
-from models.models import CreateBetRequest, CreateBetResponse, SportBet, ReadBetRequest, ReadBetResponse
+from models.models import (
+    CreateBetRequest, 
+    CreateBetResponse, 
+    SportBet, 
+    ReadBetRequest, 
+    ReadBetResponse, 
+    UpdateBetRequest, 
+    UpdateBetResponse,
+    DeleteBetRequest,
+    DeleteBetResponse
+)
 
 class SportsBettingService(SportsBettingInterface):
     def __init__(self, storage: StorageInterface) -> None:
@@ -49,4 +59,47 @@ class SportsBettingService(SportsBettingInterface):
             return ReadBetResponse(500, '', result)
 
     
-        
+    def update(self, data: UpdateBetRequest) -> UpdateBetResponse:
+        try:
+            code, response = self.storage.update_bet(SportBet(
+                id=data.id,
+                league=data.league,
+                home_team=data.home_team,
+                away_team=data.away_team,
+                home_team_win_odds=data.home_team_win_odds,
+                away_team_win_odds=data.away_team_win_odds,
+                draw_odds=data.draw_odds,
+                game_date=data.game_date
+            )
+                )
+            if code != 200 and code != 201:
+                return UpdateBetResponse(400, response)
+
+            return UpdateBetResponse(code , response)
+
+        except Exception as e:
+            result = (
+                f"-Failed to store data in MYSQL DB, reason: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            return UpdateBetResponse(500, result)
+
+    def delete(self, data: DeleteBetRequest) -> DeleteBetResponse:
+        new_date = data.game_date.split()[0]
+        try:
+            code, reason = self.storage.delete_bet(DeleteBetRequest(
+                league=data.league,
+                home_team=data.home_team,
+                away_team = data.away_team,
+                game_date = new_date
+            ))
+            if code != 204:
+                return DeleteBetResponse(400, reason)
+            
+            return DeleteBetResponse(code, reason)
+        except Exception as e:
+            result = (
+                f"-Failed to delete data from MYSQL DB, reason: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            return DeleteBetResponse(500, '', result)

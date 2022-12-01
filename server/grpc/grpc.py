@@ -6,6 +6,8 @@ from service.interfaces import SportsBettingInterface
 from models.models import (
     CreateBetRequest,
     ReadBetRequest,
+    UpdateBetRequest,
+    DeleteBetRequest
 )
 
 class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServicer):
@@ -32,6 +34,28 @@ class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServi
             request.end_date
         ))
         return sportbet_pb2.ReadBetResponse(code=response.code, response=response.response, reason=response.reason)
+
+    def UpdateBet(self, request, context):
+        response = self.sports_service.update(UpdateBetRequest(
+            request.id,
+            request.league, 
+            request.home_team, 
+            request.away_team, 
+            request.home_team_win_odds, 
+            request.away_team_win_odds, 
+            request.draw_odds, 
+            request.game_date
+        ))
+        return sportbet_pb2.UpdateBetResponse(code=response.code, reason= response.reason)
+
+    def DeleteBet(self, request, context):
+        response = self.sports_service.delete(DeleteBetRequest(
+            request.league, 
+            request.home_team, 
+            request.away_team,  
+            request.game_date
+        ))
+        return sportbet_pb2.DeleteBetResponse(code=response.code, reason= response.reason)
 
 def run (
     sports_service: SportsBettingInterface

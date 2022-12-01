@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from models.models import  SportBet, CreateBetRequest, CreateBetResponse, ReadBetRequest, ReadBetResponse
-from typing import Dict, Tuple
+from models.models import  SportBet, CreateBetRequest, CreateBetResponse, ReadBetRequest, ReadBetResponse, UpdateBetRequest, UpdateBetResponse, DeleteBetRequest, DeleteBetResponse
+from typing import Tuple
 
 class SportsBettingInterface(ABC):
     @abstractmethod
@@ -11,13 +11,13 @@ class SportsBettingInterface(ABC):
     def read(self, data: ReadBetRequest) -> ReadBetResponse:
         pass
 
-    # @abstractmethod
-    # def update(self, data):
-    #     ...
+    @abstractmethod
+    def update(self, data: UpdateBetRequest) -> UpdateBetResponse:
+        pass
 
-    # @abstractmethod
-    # def delete(self, data):
-    #     ...
+    @abstractmethod
+    def delete(self, data: DeleteBetRequest) -> DeleteBetResponse:
+        pass
 
 class StorageInterface(ABC):
     @abstractmethod
@@ -26,4 +26,12 @@ class StorageInterface(ABC):
 
     @abstractmethod
     def read_bet(self, data: ReadBetRequest) -> ReadBetResponse:
+        pass
+
+    @abstractmethod
+    def update_bet(self, data: UpdateBetRequest) -> UpdateBetResponse:
+        pass
+
+    @abstractmethod
+    def delete_bet(self, data: DeleteBetRequest) -> DeleteBetResponse:
         pass
