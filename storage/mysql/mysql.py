@@ -19,6 +19,7 @@ class MySQLStorage(StorageInterface):
 
     def create_bet(self, bet: SportBet) -> Tuple[int, str]:
         try:
+            print(bet)
             new_data = BettingModel(
                 league=bet.league,
                 home_team=bet.home_team,
