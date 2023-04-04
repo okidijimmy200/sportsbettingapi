@@ -19,7 +19,7 @@ class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServi
         response = self.sports_service.create(CreateBetRequest(
             request.league, 
             request.home_team, 
-            request.home_team, 
+            request.away_team, 
             request.home_team_win_odds, 
             request.away_team_win_odds, 
             request.draw_odds, 
@@ -37,7 +37,6 @@ class SportBetManagementService(sportbet_pb2_grpc.SportBetManagementServiceServi
 
     def UpdateBet(self, request, context):
         response = self.sports_service.update(UpdateBetRequest(
-            request.id,
             request.league, 
             request.home_team, 
             request.away_team, 

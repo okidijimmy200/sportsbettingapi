@@ -59,10 +59,14 @@ class MySQLStorage(StorageInterface):
 
     def update_bet(self, data: UpdateBetRequest) -> UpdateBetResponse:
         try:
-            q = self.db.query(BettingModel).filter(BettingModel.id == data.id).first()
+            q = self.db.query(BettingModel).filter(
+                BettingModel.league == data.league, 
+                BettingModel.home_team == data.home_team,
+                BettingModel.away_team == data.away_team
+                ).first()
             
             if q is None:
-                return False, f'Data with id {data.id} not available', 404
+                return 404, f'Data with id {data.id} not available'
             schema = BettingSchema()
             new_data = {
                 'league': data.league,

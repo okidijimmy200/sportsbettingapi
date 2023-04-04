@@ -61,8 +61,7 @@ class SportsBettingService(SportsBettingInterface):
     
     def update(self, data: UpdateBetRequest) -> UpdateBetResponse:
         try:
-            code, response = self.storage.update_bet(SportBet(
-                id=data.id,
+            code, response = self.storage.update_bet(UpdateBetRequest(
                 league=data.league,
                 home_team=data.home_team,
                 away_team=data.away_team,
@@ -79,7 +78,7 @@ class SportsBettingService(SportsBettingInterface):
 
         except Exception as e:
             result = (
-                f"-Failed to store data in MYSQL DB, reason: "
+                f"-Failed to update data in MYSQL DB, reason: "
                 + f"{type(e).__name__} {str(e)}"
             )
             return UpdateBetResponse(500, result)

@@ -1,6 +1,6 @@
 import datetime
 from typing import Tuple
-from bson import json_util
+from bson.objectid import ObjectId
 from service.interfaces import StorageInterface
 from pymongo import MongoClient
 from models.models import (
@@ -15,11 +15,11 @@ from models.models import (
 from storage.mysql.models import BettingSchema
 
 class MongoStorage(StorageInterface):
-    def __init__(self, mongo_conn) -> None:
-        self.client = MongoClient(mongo_conn)
+    def __init__(self, mongo_conn, database, collection) -> None:
+        self.client = mongo_conn
 
-        database = 'sportsapi'
-        collection = 'betmodels'
+        self.schema = BettingSchema()
+
         cursor = self.client[database]
         self.collection = cursor[collection]
 
@@ -45,7 +45,7 @@ class MongoStorage(StorageInterface):
             return 201, f'Successfully created bet'
         except Exception as e:
             reason = (
-                f"failed to read data from storage: "
+                f"failed to create bet in smongodb: "
                 + f"{type(e).__name__} {str(e)}"
             )
             print(reason) # TODO: make log
@@ -54,8 +54,6 @@ class MongoStorage(StorageInterface):
     def read_bet(self, data: ReadBetRequest) -> ReadBetResponse:
         try:
             '''read data from mongodb'''
-            schema = BettingSchema()
-
             end_date = data.end_date.split('-')
             start_date = data.start_date.split('-')
 
@@ -69,10 +67,10 @@ class MongoStorage(StorageInterface):
             lst = []
             for doc in query:
                 lst.append(doc)
-                
-            reason = schema.dump(lst, many=True)
+
+            reason = self.schema.dump(lst, many=True)
             print(reason)
-            if reason is None:
+            if len(reason) == 0:
                 return 403, None, 'Data not found'
             return 200, reason, 'Data read from mongodb'
         except Exception as e:
@@ -84,7 +82,79 @@ class MongoStorage(StorageInterface):
             return 500, reason, None
 
     def update_bet(self, data: UpdateBetRequest) -> UpdateBetResponse:
-        return super().update_bet(data)
+        try:
+            x = data.game_date
+            y = x.split(' ')
+            z = y[0]
+            new_take = z.split('-')
+
+            new_data = {
+                    "league": f"{data.league}", 
+                    "home_team": f"{data.home_team}",
+                    "away_team":  f"{data.away_team}",
+                    "home_team_win_odds":  f"{data.home_team_win_odds}",
+                    "away_team_win_odds":  f"{data.away_team_win_odds}",
+                    "draw_odds":  f"{data.draw_odds}",
+                    "game_date":  datetime.datetime(int(new_take[0]), int(new_take[1]), int(new_take[2]))
+                }
+            data_query = {
+                    "league": f"{data.league}", 
+                    "home_team": f"{data.home_team}",                                      
+                    "away_team":  f"{data.away_team}"
+            }
+
+            query = self.collection.find(data_query)
+            lst = []
+            for doc in query:
+                lst.append(doc)  
+
+            reason = self.schema.dump(lst, many=True)          
+
+            if len(reason) == 0:
+                return 404, f'Data with id  not available'
+            
+            self.collection.update_one(
+                {'_id': lst[0]['_id']},
+                {"$set": new_data}
+            )
+            return 200, 'Data updated successfully in mongodb'
+
+        except Exception as e:
+            reason = (
+                f"failed to update data in mongodb: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            print(reason) # TODO: make log
+            return 500, reason, None
 
     def delete_bet(self, data: DeleteBetRequest) -> DeleteBetResponse:
-        return super().delete_bet(data)
+        try:
+            x = data.game_date
+            y = x.split(' ')
+            z = y[0]
+            new_take = z.split('-')
+
+            new_data = {
+                'league': f"{data.league}",
+                'home_team': f'{data.home_team}',
+                'away_team': f'{data.away_team}',
+                'game_date': datetime.datetime(int(new_take[0]), int(new_take[1]), int(new_take[2]))
+                
+            }
+
+            query = self.collection.find(new_data, {'_id': 0})
+            lst = []
+            for doc in query:
+                lst.append(doc)
+
+            if len(lst) == 0:
+                return 400, 'Data not found'
+            self.collection.delete_one(new_data)
+            return 204, 'Data deleted from mongodb'
+        except Exception as e:
+            reason = (
+                f"failed to delete data from mongodb: "
+                + f"{type(e).__name__} {str(e)}"
+            )
+            print(reason) # TODO: make log
+            return 500, reason, None
