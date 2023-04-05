@@ -16,7 +16,7 @@ def test_create_bet(storage, helpers):
         },
         {
             "name": "fail",
-            "code_input": 500,
+            "code_input": 400,
             "code_output": 400,
             "response": "Failed to store data in DB"
         }
@@ -72,7 +72,7 @@ def test_update_bet(storage, helpers):
         client = helpers.sport_bet_api(storage=storage)
         client.storage.update_bet.return_value = (test_case['code_input'], test_case['response'])
         output = client.update(UpdateBetRequest(
-            1, 'seria a', 'man u', 'arsenal', 1, 2.3, 0.5, '2023-06-10'
+            'seria a', 'man u', 'arsenal', 1, 2.3, 0.5, '2023-06-10'
         ))
         assert output.code == test_case['code_output']
         assert output.reason == test_case["response"]

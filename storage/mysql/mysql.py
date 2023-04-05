@@ -19,7 +19,6 @@ class MySQLStorage(StorageInterface):
 
     def create_bet(self, bet: SportBet) -> Tuple[int, str]:
         try:
-            print(bet)
             new_data = BettingModel(
                 league=bet.league,
                 home_team=bet.home_team,
@@ -35,18 +34,19 @@ class MySQLStorage(StorageInterface):
             return 201, result
         except Exception as e:
             reason = (
-                f"failed to read data from storage: "
+                f"failed to store data: "
                 + f"{type(e).__name__} {str(e)}"
             )
+            result = 'failed to store data:'
             print(reason) # TODO: make log
-            return 500, reason, None
+            return 500, result
 
     def read_bet(self, data: ReadBetRequest) -> ReadBetResponse:
         try:
             schema = BettingSchema()
             q = self.db.query(BettingModel).filter(BettingModel.league == data.league, BettingModel.game_date.between(data.start_date, data.end_date)).first()
             reason = schema.dump([q], many=True)
-            if reason is None:
+            if len(reason[0]) == 0:
                 return 403, None, 'Data not found'
             return 200, reason, 'Data read from mysql db'
         except Exception as e:
@@ -63,27 +63,25 @@ class MySQLStorage(StorageInterface):
                 BettingModel.league == data.league, 
                 BettingModel.home_team == data.home_team,
                 BettingModel.away_team == data.away_team
-                ).first()
-            
-            if q is None:
-                return 404, f'Data with id {data.id} not available'
-            schema = BettingSchema()
-            new_data = {
-                'league': data.league,
-                'home_team': data.home_team,
-                'away_team': data.away_team,
-                'home_team_win_odds': data.home_team_win_odds,
-                'away_team_win_odds': data.away_team_win_odds,
-                'draw_odds': data.draw_odds,
-                'game_date':data.game_date
-            }
-            result = schema.load(new_data)
-            q.body = result
+                ).update({
+                    BettingModel.league : data.league,
+                    BettingModel.home_team : data.home_team,
+                    BettingModel.away_team :data.away_team,
+                    BettingModel.home_team_win_odds :data.home_team_win_odds,
+                    BettingModel.away_team_win_odds :data.away_team_win_odds,
+                    BettingModel.draw_odds : data.draw_odds,
+                    BettingModel.game_date : data.game_date
+                })
             self.db.commit()
+            print(q)
+            
+            if q == 0:
+                return 404, f'Data not available for updating'
+            
             return 200, 'Data updated in mysql db'
         except Exception as e:
             result = (
-                f"-Failed to store data in MYSQL DB, reason: "
+                f"-Failed to update data in MYSQL DB, reason: "
                 + f"{type(e).__name__} {str(e)}"
             )
             print(result)
@@ -92,22 +90,16 @@ class MySQLStorage(StorageInterface):
     
     def delete_bet(self, data: DeleteBetRequest) -> DeleteBetResponse:
         try:
-            # schema = BettingSchema()
-            print(data.game_date)
-            q = self.db.query(BettingModel).filter(BettingModel.league == data.league). \
-                                            filter(BettingModel.home_team == data.home_team). \
-                                            filter(BettingModel.away_team == data.away_team). \
-                                            filter(BettingModel.game_date == data.game_date)
-            print(q)
-            # result = schema.dump([q], many=True)
-            if q is None:
-                return 400, 'Data not found'
-            self.db.query(BettingModel).filter(BettingModel.league == data.league). \
-                                            filter(BettingModel.home_team == data.home_team). \
-                                            filter(BettingModel.away_team == data.away_team). \
-                                            filter(BettingModel.game_date == data.game_date).delete()
-            # self.db.delete(q)
+            q = self.db.query(BettingModel).filter(
+                BettingModel.league == data.league,
+                BettingModel.home_team == data.home_team,
+                BettingModel.home_team == data.home_team,
+                BettingModel.home_team == data.home_team,
+                BettingModel.away_team == data.away_team,
+                BettingModel.game_date == data.game_date).delete()
             self.db.commit()
+            if q == 0:
+                return 400, 'Data not found'
             return 204, 'Data deleted from mysql db'
         except Exception as e:
             reason = (

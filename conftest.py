@@ -1,7 +1,11 @@
 import pytest
 from unittest import mock
-import pymongo
 import mongomock
+from sqlalchemy import create_engine
+from datetime import datetime
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Table, Column, Integer, String, Float, Date
 from service.api.api import SportsBettingService
 
 class Helpers:
@@ -32,17 +36,26 @@ def pytest_addoption(parser):
         "--service", action="store", default="mysql"
     )
 
-@pytest.fixture(scope="session")
-def mongo_conn():
-    myclient = pymongo.MongoClient("mongodb://0.0.0.0:27017/")
-
-    yield myclient
-    myclient.drop_database('testdb')
-
 @pytest.fixture()
 def mongo_mock():
     client = mongomock.MongoClient()
     return client
+
+@pytest.fixture(scope='function')
+def db():
+    """Session for SQLAlchemy."""
+    Base = declarative_base()  
+    meta = Base.metadata
+    engine = create_engine('sqlite://')
+    Table('bettingmodel', meta, Column('id', Integer, primary_key=True, index=True), Column('league', String(20), index=True, nullable=False), Column('home_team', String(20), index=True), Column('away_team', String(20), index=True), Column('home_team_win_odds', Float(20), index=True), Column('away_team_win_odds', Float(20), index=True),  Column('draw_odds', Float(20), index=True), Column('game_date', Date(), index=True))
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+
+
+    
 
 
 

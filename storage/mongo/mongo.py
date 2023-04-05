@@ -18,8 +18,6 @@ class MongoStorage(StorageInterface):
     def __init__(self, mongo_conn, database, collection) -> None:
         self.client = mongo_conn
 
-        self.schema = BettingSchema()
-
         cursor = self.client[database]
         self.collection = cursor[collection]
 
@@ -54,6 +52,8 @@ class MongoStorage(StorageInterface):
     def read_bet(self, data: ReadBetRequest) -> ReadBetResponse:
         try:
             '''read data from mongodb'''
+            schema = BettingSchema()
+
             end_date = data.end_date.split('-')
             start_date = data.start_date.split('-')
 
@@ -68,7 +68,7 @@ class MongoStorage(StorageInterface):
             for doc in query:
                 lst.append(doc)
 
-            reason = self.schema.dump(lst, many=True)
+            reason = schema.dump(lst, many=True)
             print(reason)
             if len(reason) == 0:
                 return 403, None, 'Data not found'
@@ -87,6 +87,8 @@ class MongoStorage(StorageInterface):
             y = x.split(' ')
             z = y[0]
             new_take = z.split('-')
+
+            schema = BettingSchema()
 
             new_data = {
                     "league": f"{data.league}", 
@@ -107,9 +109,11 @@ class MongoStorage(StorageInterface):
             lst = []
             for doc in query:
                 lst.append(doc)  
+            print(lst)
 
-            reason = self.schema.dump(lst, many=True)          
+            reason = schema.dump(lst, many=True)          
 
+            print(reason)
             if len(reason) == 0:
                 return 404, f'Data with id  not available'
             
@@ -146,7 +150,9 @@ class MongoStorage(StorageInterface):
             lst = []
             for doc in query:
                 lst.append(doc)
-
+            print('if test')
+            print(lst)
+            
             if len(lst) == 0:
                 return 400, 'Data not found'
             self.collection.delete_one(new_data)

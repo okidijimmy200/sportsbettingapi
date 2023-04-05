@@ -14,6 +14,17 @@ class SportBet:
     game_date: str
 
 @dataclass
+class CreateBetSQL:
+    league: str
+    home_team : str
+    away_team: str
+    home_team_win_odds : float
+    away_team_win_odds: float
+    draw_odds: float
+    game_date: datetime.date
+
+
+@dataclass
 class CreateBetRequest:
     league: str
     home_team : str

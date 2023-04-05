@@ -1,7 +1,8 @@
 from models.models import (
-    SportBet,
+    CreateBetRequest,
     ReadBetRequest,
-    UpdateBetRequest
+    UpdateBetRequest,
+    DeleteBetRequest
 )
 from storage.mongo.mongo import MongoStorage
 
@@ -14,8 +15,8 @@ def test_create_bet(mongo_mock):
     ]
     for test_case in test_cases:
         mong_storage = MongoStorage(mongo_mock, 'testdb', 'testcollection')
-        result = mong_storage.create_bet(SportBet(
-            1, 'epl', 'man u', 'arsenal', 0.35, 3, 2, '2023-10-10'
+        result = mong_storage.create_bet(UpdateBetRequest(
+            'epl', 'man u', 'arsenal', 0.35, 3, 2, '2023-10-10'
         ))
         assert result == test_case['output']
 
@@ -34,8 +35,8 @@ def test_read_bet(mongo_mock):
         }
     ]
     for test_case in test_cases:
-        MongoStorage(mongo_mock, 'testdb', 'testcollection').create_bet(SportBet(
-            1, 'upl', 'man u', 'arsenal', 0.35, 3, 2, '2023-10-10'
+        MongoStorage(mongo_mock, 'testdb', 'testcollection').create_bet(CreateBetRequest(
+            'upl', 'man u', 'arsenal', 0.35, 3, 2, '2023-10-10'
         ))
         result = MongoStorage(mongo_mock, 'testdb', 'testcollection').read_bet(test_case['input'])
         assert result[0] == test_case['output'][0]
@@ -45,18 +46,40 @@ def test_update_bet(mongo_mock):
     test_cases = [
         {
             "name": "pass",
-            "input": UpdateBetRequest('64257c843f889c5c678ae4bb', 'epl', 'man u', 'chelsea', 0.35, 3, 2, '2023-10-10'),
+            "input": UpdateBetRequest('epl', 'man u', 'chelsea', 0.35, 3, 2, '2023-10-10'),
             "output": (200, 'Data updated successfully in mongodb')
         },
-        # {
-        # "name": "fail",
-        # "input": UpdateBetRequest('NFL', '2022-10-09', '2022-10-11'),
-        # "output": (403,  None, "Data not found")
-        # }
+        {
+        "name": "fail",
+        "input": UpdateBetRequest('NFL', 'man u', 'chelsea', 2, 5, 4, '2025-10-10'),
+        "output": (404, "Data with id  not available")
+        }
     ]
     for test_case in test_cases:
-        MongoStorage(mongo_mock, 'testdb', 'testcollection').create_bet(SportBet(
-            '64257c843f889c5c678ae4bb', 'upl', 'man u', 'arsenal', 0.35, 3, 2, '2023-10-10'
+        MongoStorage(mongo_mock, 'testdb', 'testcollection').create_bet(UpdateBetRequest(
+            'epl', 'man u', 'chelsea', 2, 5, 4, '2025-10-10'
         ))
         result = MongoStorage(mongo_mock, 'testdb', 'testcollection').update_bet(test_case['input'])
         assert result[0] == test_case['output'][0]
+        assert result[1] == test_case['output'][1]
+
+def test_delete(mongo_mock):
+    test_cases = [
+        {
+        "name": "pass",
+        "input": DeleteBetRequest('epl', 'man u', 'chelsea', '2025-10-10'),
+        "output": (204, 'Data deleted from mongodb')
+        },
+        {
+        "name": "fail",
+        "input": DeleteBetRequest('eplff', 'man u', 'chelsea', '2025-10-10'),
+        "output": (400, 'Data not found')
+        }
+    ]
+    for test_case in test_cases:
+        MongoStorage(mongo_mock, 'testdb', 'testcollection').create_bet(UpdateBetRequest(
+            'epl', 'man u', 'chelsea', 2, 5, 4, '2025-10-10'
+        ))
+        result = MongoStorage(mongo_mock, 'testdb', 'testcollection').delete_bet(test_case['input'])
+        assert result[0] == test_case['output'][0]
+        assert result[1] == test_case['output'][1]
